@@ -1,0 +1,3 @@
+playwright>=1.48
+customtkinter>=5.2
+qrcode[pil]>=7.4

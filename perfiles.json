@@ -1,0 +1,209 @@
+{
+  "active": "sololatino",
+  "settings": {
+    "brave_path": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "port": 9222,
+    "profile_dir": "brave_profile",
+    "web_port": 8765,
+    "token": "tn-fvjvP",
+    "theme": "dark"
+  },
+  "profiles": {
+    "sololatino": {
+      "name": "sololatino",
+      "url": "https://sololatino.co/serie/boku-no-hero/temporada-1/episodio-1",
+      "seconds_before_end": 10.0,
+      "next_selector": "a.btn-accent[href*='episodio']",
+      "next_text": "Siguiente",
+      "play_selectors": [
+        "button.play-button-overlay",
+        ".plyr__control--overlaid",
+        ".jw-icon-display",
+        ".vjs-big-play-button",
+        "button[aria-label*='play' i]"
+      ],
+      "popup_selectors": [
+        "[class*='modal'] [class*='close']",
+        "[class*='popup'] [class*='close']",
+        "[aria-label='Close']",
+        "[aria-label='Cerrar']",
+        ".btn-close"
+      ],
+      "overlay_selectors": [
+        "[class*='modal-backdrop']",
+        "div[style*='z-index: 2147483647']"
+      ],
+      "allowed_domains": [
+        "sololatino.co"
+      ],
+      "fullscreen": true,
+      "max_quality": true,
+      "preferred_language": "Latino",
+      "language_selector": "[data-lang-tab], .player-tab",
+      "servers": [
+        {
+          "name": "Principal",
+          "selector": "button.server-btn",
+          "text": "",
+          "enabled": true,
+          "opener": ""
+        },
+        {
+          "name": "SLPLAYER",
+          "selector": "button.server-btn",
+          "text": "",
+          "enabled": true,
+          "opener": ""
+        },
+        {
+          "name": "FEMBED",
+          "selector": "button.server-btn",
+          "text": "",
+          "enabled": true,
+          "opener": ""
+        }
+      ],
+      "auto_rank_servers": true,
+      "server_timeout": 50.0,
+      "stall_seconds": 20.0,
+      "min_video_duration": 120.0,
+      "search_input_selector": "input[placeholder='Buscar...']",
+      "search_url": "https://sololatino.co/buscar?q={q}",
+      "result_pattern": "/(serie|pelicula)/[^/]+/?$",
+      "episode_pattern": "/temporada-\\d+/episodio-\\d+",
+      "season_selector": "select:has(option:has-text('Temporada'))",
+      "episode_limit_enabled": false,
+      "episode_limit": 3,
+      "resume": true,
+      "auto_resume": true,
+      "health": {
+        "Principal": {
+          "successes": 12,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 1792694808.0211654,
+          "last_fail": 0.0
+        },
+        "SLPLAYER": {
+          "successes": 0,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 0.0,
+          "last_fail": 0.0
+        },
+        "FEMBED": {
+          "successes": 0,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 0.0,
+          "last_fail": 0.0
+        }
+      }
+    },
+    "seriesflixhd": {
+      "name": "seriesflixhd",
+      "url": "https://seriesflixhd.pw/episodio/how-i-met-your-mother-2-1x1/",
+      "seconds_before_end": 10.0,
+      "next_selector": "a.next",
+      "next_text": "Siguiente",
+      "play_selectors": [
+        "button.play-button-overlay",
+        ".plyr__control--overlaid",
+        ".jw-icon-display",
+        ".vjs-big-play-button",
+        "button[aria-label*='play' i]"
+      ],
+      "popup_selectors": [
+        "[class*='modal'] [class*='close']",
+        "[class*='popup'] [class*='close']",
+        "[aria-label='Close']",
+        "[aria-label='Cerrar']",
+        ".btn-close"
+      ],
+      "overlay_selectors": [
+        "#ifnelta"
+      ],
+      "allowed_domains": [
+        "seriesflixhd.pw",
+        "pelisflixhd1.online"
+      ],
+      "fullscreen": true,
+      "max_quality": true,
+      "preferred_language": "Latino",
+      "language_selector": "[data-lang-tab], .player-tab",
+      "servers": [
+        {
+          "name": "Latino",
+          "selector": ".optnslst .Button",
+          "text": "LATINO",
+          "enabled": true,
+          "opener": "button.bstd:has-text('LATINO')"
+        },
+        {
+          "name": "Castellano",
+          "selector": ".optnslst .Button",
+          "text": "CASTELLANO",
+          "enabled": true,
+          "opener": "button.bstd:has-text('CASTELLANO')"
+        },
+        {
+          "name": "Subtitulado",
+          "selector": ".optnslst .Button",
+          "text": "SUBTITULADO",
+          "enabled": true,
+          "opener": "button.bstd:has-text('SUBTITULADO')"
+        }
+      ],
+      "auto_rank_servers": true,
+      "server_timeout": 50.0,
+      "stall_seconds": 20.0,
+      "min_video_duration": 120.0,
+      "search_input_selector": "input[name='s']",
+      "search_url": "https://seriesflixhd.pw/?s={q}",
+      "result_pattern": "/(serie|pelicula)/[^/]+/?$",
+      "episode_pattern": "/episodio/[^/#]+/?$",
+      "season_selector": "section.SeasonBx .Title a",
+      "episode_limit_enabled": false,
+      "episode_limit": 1,
+      "resume": true,
+      "auto_resume": true,
+      "health": {
+        "Latino": {
+          "successes": 5,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 1792693628.9657676,
+          "last_fail": 0.0
+        },
+        "Castellano": {
+          "successes": 0,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 0.0,
+          "last_fail": 0.0
+        },
+        "Subtitulado": {
+          "successes": 0,
+          "failures": 0,
+          "stalls": 0,
+          "last_ok": 0.0,
+          "last_fail": 0.0
+        }
+      }
+    }
+  },
+  "progress": {
+    "seriesflixhd": {
+      "url": "https://seriesflixhd.pw/episodio/south-park-zroo-1x1/",
+      "position": 30.176006,
+      "title": "Ver South Park 1x1 Online Gratis Capitulo Completo HD",
+      "updated": 1792693660.9931312
+    },
+    "sololatino": {
+      "url": "https://sololatino.co/serie/boku-no-hero/temporada-2/episodio-3",
+      "position": 0,
+      "title": "My Hero Academia T2E03 Online en Español — SoloLatino.Co",
+      "updated": 1792694778.9983075
+    }
+  }
+}

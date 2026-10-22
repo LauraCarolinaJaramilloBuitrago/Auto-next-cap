@@ -1,0 +1,28 @@
+{
+  "activo": "sololatino",
+  "perfiles": {
+    "sololatino": {
+      "url": "https://sololatino.co/serie/boku-no-hero/temporada-1/episodio-4",
+      "segundos_antes": 10.0,
+      "selector_siguiente": "a.btn-accent[href*='episodio']",
+      "texto_siguiente": "Siguiente",
+      "selector_play": "button.play-button-overlay",
+      "dominios_permitidos": [
+        "sololatino.co"
+      ],
+      "pantalla_completa_al_iniciar": true,
+      "selectores_emergentes": [
+        "[class*='modal'] [class*='close']",
+        "[class*='popup'] [class*='close']",
+        "[aria-label='Close']",
+        "[aria-label='Cerrar']",
+        ".close",
+        ".btn-close"
+      ],
+      "eliminar_overlays": [
+        "[class*='modal-backdrop']",
+        "div[style*='z-index: 2147483647']"
+      ]
+    }
+  }
+}
