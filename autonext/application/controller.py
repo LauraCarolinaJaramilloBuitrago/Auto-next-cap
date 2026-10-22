@@ -30,6 +30,7 @@ class AppController:
         self.results: list[dict] = []
         self.episodes: list[dict] = []
         self.seasons: list[str] = []
+        self.servers: list[str] = []
         self.server_url = ""  # la pone el servidor web al arrancar
 
     # ---------- eventos ----------
@@ -46,6 +47,8 @@ class AppController:
                 self.episodes = e.data["episodes"]
             elif e.kind == "seasons":
                 self.seasons = e.data["seasons"]
+            elif e.kind == "servers":
+                self.servers = e.data["servers"]
             if e.kind != "status" and e.message:
                 self._log_id += 1
                 self.logs.append({"id": self._log_id, "kind": e.kind, "message": e.message, "at": e.at})
@@ -108,6 +111,7 @@ class AppController:
                 "results": self.results,
                 "episodes": self.episodes,
                 "seasons": self.seasons,
+                "servers": self.servers,
                 "profiles": list(profiles),
                 "active": active,
                 "progress": progress,

@@ -46,7 +46,7 @@ JS_STATE = f"""(min) => {{
   const v = ({JS_PICK})(min);
   if (!v) return null;
   return {{position: v.currentTime, duration: v.duration, paused: v.paused,
-          ended: v.ended, error: !!v.error}};
+          ended: v.ended, error: !!v.error, volume: v.volume, muted: v.muted}};
 }}"""
 
 JS_PLAY = """() => {
@@ -67,6 +67,21 @@ JS_PAUSE = f"""([paused, min]) => {{
   if (!v) return false;
   if (paused) v.pause(); else v.play().catch(() => {{}});
   return true;
+}}"""
+
+JS_VOLUME = f"""([delta, min]) => {{
+  const v = ({JS_PICK})(min);
+  if (!v) return null;
+  v.muted = false;
+  v.volume = Math.max(0, Math.min(1, Math.round((v.volume + delta) * 100) / 100));
+  return v.volume;
+}}"""
+
+JS_MUTE = f"""(min) => {{
+  const v = ({JS_PICK})(min);
+  if (!v) return null;
+  v.muted = !v.muted;
+  return v.muted;
 }}"""
 
 JS_FULLSCREEN = f"""(min) => {{
@@ -462,6 +477,27 @@ class BraveBrowser(BrowserPort):
         self.page.bring_to_front()
         self.wait(2)
 
+    def change_volume(self, delta: float, min_duration: float) -> float | None:
+        fr, _ = self._video_frame(min_duration)
+        return fr.evaluate(JS_VOLUME, [delta, min_duration]) if fr else None
+
+    def toggle_mute(self, min_duration: float) -> bool | None:
+        fr, _ = self._video_frame(min_duration)
+        return fr.evaluate(JS_MUTE, min_duration) if fr else None
+
+    def list_servers(self, profile: SiteProfile) -> list[Server]:
+        out: list[Server] = []
+        for sel in dict.fromkeys(s.selector for s in profile.servers if s.selector):
+            try:
+                texts = self.page.locator(sel).filter(visible=True).all_inner_texts()
+            except Exception:
+                continue
+            for t in texts:
+                name = re.sub(r"^\W+", "", " ".join(t.split()))  # quita emojis/iconos del inicio
+                if name and all(o.name != name for o in out):
+                    out.append(Server(name, sel))
+        return out[:20]
+
     def select_language(self, profile: SiteProfile) -> bool:
         lang = profile.preferred_language.strip()
         if not (lang and profile.language_selector):
@@ -524,7 +560,7 @@ class BraveBrowser(BrowserPort):
             title = re.sub(r"^(siguiente|anterior|next|previous)\b\W*", "", title, flags=re.I).strip()
             # Etiqueta T1 E3 sacada de la URL (1x3, temporada-1/episodio-3, s01e03)
             m = (re.search(r"(\d+)x(\d+)/?$", l["url"]) or re.search(r"temporada-(\d+)/episodio-(\d+)", l["url"])
-                 or re.search(r"s(\d+)e(\d+)", l["url"], re.I))
+                 or re.search(r"s(\d+)-?e(\d+)", l["url"], re.I))
             label = f"T{int(m.group(1))} E{int(m.group(2))}" if m else ""
             if label and label.replace(" ", "") not in title.replace(" ", ""):
                 title = f"{label} · {title}" if title else label

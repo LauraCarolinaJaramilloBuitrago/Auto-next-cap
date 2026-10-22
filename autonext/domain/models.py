@@ -49,6 +49,8 @@ class PlaybackState:
     paused: bool
     ended: bool
     error: bool = False
+    volume: float = 1.0
+    muted: bool = False
 
     @property
     def remaining(self) -> float:
@@ -228,7 +230,25 @@ def default_profiles() -> list[SiteProfile]:
         episode_pattern=r"/episodio/[^/#]+/?$",
         season_selector="section.SeasonBx .Title a",
     )
-    return [sololatino, seriesflix]
+    movie0123 = SiteProfile(
+        name="0123movie",
+        url="https://0123movie.pro/episode/how-i-met-your-mother-2005-watch-online/s02-e02/",
+        next_selector="",  # no tiene boton Siguiente: se usa la lista de capitulos
+        next_text="",
+        play_selectors=["#btn-big-play", *COMMON_PLAY],
+        popup_selectors=list(COMMON_POPUPS),
+        allowed_domains=["0123movie.pro"],
+        # la lista de servidores aparece despues de pulsar el play grande
+        servers=[Server("Vidmoly", "#server-list a", opener="#btn-big-play"),
+                 Server("0123Movies", "#server-list a", opener="#btn-big-play")],
+        search_input_selector="input.search-input",
+        search_url="https://0123movie.pro/search?keyword={q}",
+        result_pattern=r"/watch-(series|movie)/[^/]+/?$",
+        episode_pattern=r"/episode/[^/]+/s\d+-e\d+/?$",
+        season_selector="a.ss-item",
+        preferred_language="",  # sitio en ingles: sin pestañas de idioma
+    )
+    return [sololatino, seriesflix, movie0123]
 
 
 def default_profile() -> SiteProfile:

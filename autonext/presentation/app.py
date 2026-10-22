@@ -207,6 +207,24 @@ class App(ctk.CTk):
         for i, b in enumerate(self.play_buttons):
             b.grid(row=0, column=i, padx=4)
             b.configure(state="disabled")
+        ctrl2 = ctk.CTkFrame(prog, fg_color="transparent")
+        ctrl2.grid(row=4, column=0, columnspan=3, pady=(0, 10))
+        vol_buttons = [
+            small_btn(ctrl2, "🔇", lambda: self.ctl.command("mute")),
+            small_btn(ctrl2, "🔉 −", lambda: self.ctl.command("volume", delta=-0.1), width=60),
+            small_btn(ctrl2, "🔊 +", lambda: self.ctl.command("volume", delta=0.1), width=60),
+        ]
+        for i, b in enumerate(vol_buttons):
+            b.grid(row=0, column=i, padx=4)
+            b.configure(state="disabled")
+        self.play_buttons += vol_buttons
+        ctk.CTkLabel(ctrl2, text="Servidor:", text_color=MUTED).grid(row=0, column=3, padx=(16, 4))
+        self.opt_server = ctk.CTkOptionMenu(ctrl2, values=["-"], width=170, fg_color=BG_SOFT, button_color=ACCENT,
+                                            button_hover_color=ACCENT_HOVER, text_color=TEXT,
+                                            command=lambda n: self.ctl.command("server", name=n))
+        self.opt_server.grid(row=0, column=4, padx=4)
+        self.opt_server.configure(state="disabled")
+        self.play_buttons.append(self.opt_server)
         self.lbl_url = ctk.CTkLabel(prog, text="", text_color=MUTED, anchor="w")
         self.lbl_url.grid(row=3, column=0, columnspan=3, sticky="ew", padx=14, pady=(0, 8))
 
@@ -593,6 +611,8 @@ class App(ctk.CTk):
                     self._show_episodes(e.data["episodes"])
                 elif e.kind == "seasons":
                     self._show_seasons(e.data["seasons"])
+                elif e.kind == "servers" and e.data["servers"]:
+                    self.opt_server.configure(values=e.data["servers"])
                 if e.kind != "status" and e.message:
                     self._write(e)
                 if e.data.get("finished"):
@@ -624,6 +644,8 @@ class App(ctk.CTk):
                            DANGER if dur and left <= self.profile.seconds_before_end + 20 else None)
         self.card_ep.set(str(d["episode"]) + (f" / {d['limit']}" if d.get("limit_enabled") else ""))
         self.card_server.set(d["server"])
+        if d["server"] != "-" and self.opt_server.get() != d["server"]:
+            self.opt_server.set(d["server"])
         self.lbl_title.configure(text=d.get("title") or "Cargando…")
         self.lbl_url.configure(text=d["url"])
         if self.ctl.service:

@@ -62,6 +62,18 @@ class BrowserPort(ABC):
         """Pulsa la pestaña del idioma preferido si el sitio la tiene."""
 
     @abstractmethod
+    def change_volume(self, delta: float, min_duration: float) -> float | None:
+        """Suma delta (0..1) al volumen del video; devuelve el nuevo volumen."""
+
+    @abstractmethod
+    def toggle_mute(self, min_duration: float) -> bool | None:
+        """Alterna silencio; devuelve True si quedo silenciado."""
+
+    @abstractmethod
+    def list_servers(self, profile: SiteProfile) -> list[Server]:
+        """Servidores que la pagina muestra ahora (botones visibles)."""
+
+    @abstractmethod
     def max_quality(self) -> str | None:
         """Sube el reproductor a su calidad mas alta; devuelve la etiqueta elegida o None."""
 

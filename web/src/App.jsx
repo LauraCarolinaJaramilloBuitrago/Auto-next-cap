@@ -148,6 +148,20 @@ function PlayTab({ s, run }) {
           <button onClick={run(() => api.cmd("seek_relative", { delta: 10 }))}>+10</button>
           <button onClick={run(() => api.cmd("seek_relative", { delta: 30 }))}>+30</button>
         </div>
+        <div className="row volume">
+          <button className="btn" onClick={run(() => api.cmd("mute"))} aria-label="Silenciar">{st.muted ? "🔇" : "🔈"}</button>
+          <button className="btn" onClick={run(() => api.cmd("volume", { delta: -0.1 }))}>− Vol</button>
+          <b className="vol">{st.volume == null ? "--" : st.muted ? "0" : st.volume}%</b>
+          <button className="btn" onClick={run(() => api.cmd("volume", { delta: 0.1 }))}>+ Vol</button>
+        </div>
+        {s.running && s.servers.length > 0 && (
+          <div className="chips scroll servers">
+            {s.servers.map((n) => (
+              <button key={n} className={`chip ${n === st.server || n.includes(st.server) ? "on" : ""}`}
+                onClick={run(() => api.cmd("server", { name: n }))}>{n}</button>
+            ))}
+          </div>
+        )}
         <div className="grid3">
           <button className="btn" onClick={run(() => api.cmd("skip"))}>⏭ Siguiente</button>
           <button className="btn" onClick={run(() => api.cmd("switch_server"))}>⇄ Servidor</button>

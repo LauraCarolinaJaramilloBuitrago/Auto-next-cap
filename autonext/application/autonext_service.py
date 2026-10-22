@@ -103,12 +103,15 @@ class AutoNextService:
             ranked = [s for s in ranked if s != exclude] + [s for s in ranked if s == exclude]
         return ranked
 
-    def ensure_playing(self, resume_at: float | None = None, exclude: Server | None = None) -> bool:
+    def ensure_playing(self, resume_at: float | None = None, exclude: Server | None = None,
+                       first: Server | None = None) -> bool:
         self.mode = WATCHING
         if self.browser.select_language(self.profile):
             self.publish(ev.info(f"Idioma: {self.profile.preferred_language}"))
         self._quality_tries = 0
         cands = self._candidates(exclude)
+        if first:  # elegido a mano: primero ese, luego el resto como respaldo
+            cands = [first] + [s for s in cands if s.name != first.name]
         if not cands:
             # Sitio sin servidores configurados: solo intentar play
             return self._starts_playing()
@@ -126,6 +129,7 @@ class AutoNextService:
                 self.profile.record_success(server)
                 self.repo.save_health(self.profile)
                 self.publish(ev.ok(f"Servidor {server.name} funcionando", server=server.name))
+                self._publish_servers()  # algunos sitios solo listan servidores tras dar play
                 if resume_at and resume_at > 5:
                     self.browser.seek(resume_at - 3, self.profile.min_video_duration)
                     self.publish(ev.info(f"Retomando en {fmt(resume_at - 3)}"))
@@ -148,7 +152,7 @@ class AutoNextService:
         self.browser.exit_fullscreen()
         self.browser.close_popups(self.profile)
         old = self.browser.current_url()
-        if not self.browser.click_next(self.profile):
+        if not self.browser.click_next(self.profile) and not self._open_next_from_list(old):
             self.publish(ev.error("No hay boton Siguiente: fin de la serie"))
             return False
         self.episodes += 1
@@ -161,6 +165,16 @@ class AutoNextService:
         self.stall.reset()
         self.ensure_playing()
         self._wait(10)  # evita disparar de nuevo con datos del capitulo anterior
+        return True
+
+    def _open_next_from_list(self, current: str) -> bool:
+        """Sitios sin boton Siguiente: abrir el capitulo que sigue en la lista de la pagina."""
+        eps = self.browser.episodes(self.profile)
+        urls = [e.url.rstrip("/") for e in eps]
+        cur = current.split("#")[0].rstrip("/")
+        if cur not in urls or urls.index(cur) + 1 >= len(urls):
+            return False
+        self.browser.open(eps[urls.index(cur) + 1].url)
         return True
 
     def _end_of_episode(self, st: PlaybackState) -> bool:
@@ -199,6 +213,25 @@ class AutoNextService:
             on = a["on"] if "on" in a else not self.browser.is_fullscreen()
             self.want_fullscreen = bool(on)
             (self.browser.enter_fullscreen if on else self.browser.exit_fullscreen)()
+        elif cmd.name == "volume":
+            vol = self.browser.change_volume(float(a.get("delta", 0.1)), md)
+            if vol is not None:
+                self.publish(ev.info(f"Volumen {round(vol * 100)}%"))
+        elif cmd.name == "mute":
+            muted = self.browser.toggle_mute(md)
+            if muted is not None:
+                self.publish(ev.info("Silenciado" if muted else "Sonido activado"))
+        elif cmd.name == "server":
+            name = str(a["name"])
+            found = next((s for s in self.browser.list_servers(self.profile) if s.name == name), None)
+            conf = next((s for s in self.profile.servers if s.match_text.lower() in name.lower()), None)
+            server = conf or found
+            if not server:
+                self.publish(ev.warn(f"Servidor '{name}' no esta en la pagina"))
+                return True
+            self.publish(ev.info(f"Servidor elegido: {name}"))
+            self.browser.exit_fullscreen()
+            self.ensure_playing(resume_at=last.position if last else None, first=server)
         elif cmd.name == "set_quality":
             self.profile.max_quality = bool(a.get("enabled"))
             self.publish(ev.info("Calidad maxima " + ("activada" if self.profile.max_quality else "desactivada")))
@@ -275,6 +308,10 @@ class AutoNextService:
         eps = self.browser.episodes(self.profile)
         self.publish(ev.DomainEvent("episodes", f"{len(eps)} capitulos", {"episodes": [asdict(e) for e in eps]}))
 
+    def _publish_servers(self):
+        names = [s.name for s in self.browser.list_servers(self.profile)] or [s.name for s in self.profile.servers]
+        self.publish(ev.DomainEvent("servers", "", {"servers": names}))
+
     def _publish_seasons(self):
         ss = self.browser.seasons(self.profile)
         self.publish(ev.DomainEvent("seasons", "", {"seasons": ss}))
@@ -303,9 +340,10 @@ class AutoNextService:
                     self.publish(ev.error("Navegador cerrado"))
                     break
                 self.browser.close_popups(self.profile, deep=False)
-                if self.browser.current_url() != self._listed_url:  # pagina nueva: lista de capitulos al dia
+                if self.browser.current_url() != self._listed_url:  # pagina nueva: listas al dia
                     self._publish_seasons()
                     self._publish_episodes()
+                    self._publish_servers()
                 st = self._video() if self.mode == WATCHING else None
                 if st:
                     last = st
@@ -317,6 +355,7 @@ class AutoNextService:
                     position=st.position if st else 0, duration=st.duration if st else 0,
                     paused=st.paused if st else True, episode=self.episodes,
                     fullscreen=self.want_fullscreen, quality=self.profile.max_quality,
+                    volume=round(st.volume * 100) if st else None, muted=st.muted if st else False,
                     server=self.current_server.name if self.current_server else "-",
                     url=self.browser.current_url(), title=self.browser.page_title(),
                     limit_enabled=self.profile.episode_limit_enabled, limit=self.profile.episode_limit,

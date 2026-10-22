@@ -190,6 +190,66 @@
           "last_fail": 0.0
         }
       }
+    },
+    "0123movie": {
+      "name": "0123movie",
+      "url": "https://0123movie.pro/episode/how-i-met-your-mother-2005-watch-online/s02-e02/",
+      "seconds_before_end": 10,
+      "next_selector": "",
+      "next_text": "",
+      "play_selectors": [
+        "#btn-big-play",
+        "button.play-button-overlay",
+        ".plyr__control--overlaid",
+        ".jw-icon-display",
+        ".vjs-big-play-button",
+        "button[aria-label*='play' i]"
+      ],
+      "popup_selectors": [
+        "[class*='modal'] [class*='close']",
+        "[class*='popup'] [class*='close']",
+        "[aria-label='Close']",
+        "[aria-label='Cerrar']",
+        ".btn-close"
+      ],
+      "overlay_selectors": [],
+      "allowed_domains": [
+        "0123movie.pro"
+      ],
+      "fullscreen": true,
+      "max_quality": true,
+      "preferred_language": "",
+      "language_selector": "[data-lang-tab], .player-tab",
+      "servers": [
+        {
+          "name": "Vidmoly",
+          "selector": "#server-list a",
+          "text": "",
+          "enabled": true,
+          "opener": "#btn-big-play"
+        },
+        {
+          "name": "0123Movies",
+          "selector": "#server-list a",
+          "text": "",
+          "enabled": true,
+          "opener": "#btn-big-play"
+        }
+      ],
+      "auto_rank_servers": true,
+      "server_timeout": 50,
+      "stall_seconds": 20,
+      "min_video_duration": 120,
+      "search_input_selector": "input.search-input",
+      "search_url": "https://0123movie.pro/search?keyword={q}",
+      "result_pattern": "/watch-(series|movie)/[^/]+/?$",
+      "episode_pattern": "/episode/[^/]+/s\\d+-e\\d+/?$",
+      "season_selector": "a.ss-item",
+      "episode_limit_enabled": false,
+      "episode_limit": 3,
+      "resume": true,
+      "auto_resume": true,
+      "health": {}
     }
   },
   "progress": {

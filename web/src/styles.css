@@ -123,3 +123,6 @@ code, .mono { font-family: ui-monospace, Consolas, monospace; word-break: break-
 .tabs .ti { font-size: 20px; }
 .tabs .active { color: var(--accent); }
 .icon:disabled { opacity: 0.4; }
+.volume { justify-content: center; margin: 12px 0 4px; }
+.volume .vol { min-width: 52px; text-align: center; }
+.servers { margin: 8px 0; }
