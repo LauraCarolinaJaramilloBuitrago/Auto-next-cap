@@ -89,7 +89,11 @@ class AppController:
             if name == "open":
                 self.start(url=args["url"])
                 return
-            if name == "search":
+            if name == "home":
+                p = self.active_profile()
+                u = urlparse(p.url)
+                self.start(url=p.home_url or f"{u.scheme}://{u.netloc}/")
+            elif name == "search":
                 p = self.active_profile()
                 u = urlparse(p.url)
                 self.start(url=f"{u.scheme}://{u.netloc}/")

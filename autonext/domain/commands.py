@@ -16,6 +16,7 @@ COMMANDS = {
     "mute": "Silenciar / quitar silencio",
     "server": "Usar un servidor concreto (args: name)",
     "search": "Buscar serie (args: query)",
+    "home": "Series de la pantalla de inicio del sitio",
     "open": "Abrir serie o capitulo (args: url)",
     "back": "Volver a la pagina anterior",
     "episodes": "Listar capitulos de la pagina actual",

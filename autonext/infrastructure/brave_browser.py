@@ -9,7 +9,7 @@ import subprocess
 import sys
 import time
 import urllib.request
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 from playwright.sync_api import sync_playwright
 
@@ -117,7 +117,7 @@ JS_LINKS = """(re) => {
   const rx = new RegExp(re), seen = new Set(), out = [];
   for (const a of document.querySelectorAll('a[href]')) {
     if ((a.getAttribute('href') || '').includes('#')) continue;  // "mostrar mas", anclas internas
-    const href = a.href;
+    const href = new URL(a.getAttribute('href'), location.href).href;  // absoluta siempre
     if (!rx.test(href)) continue;
     const img = a.querySelector('img');
     const title = (a.innerText || a.title || (img && img.alt) || '').trim().replace(/\\s+/g, ' ')
@@ -125,7 +125,7 @@ JS_LINKS = """(re) => {
     const image = img ? (img.dataset.src || img.getAttribute('data-lazy-src') || img.src || '') : '';
     const prev = out.find(o => o.url === href);
     if (prev) {  // mismo enlace repetido: quedarse con el titulo/imagen mas completos
-      if (!prev.title && title) prev.title = title;
+      if (title.length > prev.title.length) prev.title = title;  // "22m" < "E1 - Maomao"
       if (!prev.image && image) prev.image = image;
       continue;
     }
@@ -468,7 +468,7 @@ class BraveBrowser(BrowserPort):
                     self.page.wait_for_load_state("domcontentloaded")
                     return True
         if href:
-            self.page.goto(href, wait_until="domcontentloaded")
+            self.page.goto(urljoin(self.page.url, href), wait_until="domcontentloaded")
             return True
         return False
 
@@ -547,9 +547,18 @@ class BraveBrowser(BrowserPort):
             self.page.goto(profile.search_url.format(q=quote_plus(query)), wait_until="domcontentloaded")
         self.wait(2.5)
         self.close_popups(profile)
+        return self.results_here(profile)
+
+    def results_here(self, profile: SiteProfile) -> list[SearchResult]:
         links = self.page.evaluate(JS_LINKS, profile.result_pattern)
         return [SearchResult(l["title"] or l["url"].rstrip("/").rsplit("/", 1)[-1], l["url"], l["image"])
-                for l in links][:40]
+                for l in links][:60]
+
+    def has_element(self, selector: str) -> bool:
+        try:
+            return self.page.locator(selector).count() > 0  # puede estar dentro de un menu cerrado
+        except Exception:
+            return False
 
     def episodes(self, profile: SiteProfile) -> list[Episode]:
         links = self.page.evaluate(JS_LINKS, profile.episode_pattern)
@@ -558,6 +567,8 @@ class BraveBrowser(BrowserPort):
             title = l["title"]
             # Boton "Siguiente → T1E2: ..." / "Anterior": quitar la palabra y la flecha
             title = re.sub(r"^(siguiente|anterior|next|previous)\b\W*", "", title, flags=re.I).strip()
+            if re.match(r"(comenzar|continuar|seguir) a ver\b", title, re.I):
+                continue  # boton destacado de la serie, no un capitulo de la lista
             # Etiqueta T1 E3 sacada de la URL (1x3, temporada-1/episodio-3, s01e03)
             m = (re.search(r"(\d+)x(\d+)/?$", l["url"]) or re.search(r"temporada-(\d+)/episodio-(\d+)", l["url"])
                  or re.search(r"s(\d+)-?e(\d+)", l["url"], re.I))

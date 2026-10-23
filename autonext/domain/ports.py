@@ -85,6 +85,14 @@ class BrowserPort(ABC):
     def search(self, profile: SiteProfile, query: str) -> list[SearchResult]: ...
 
     @abstractmethod
+    def results_here(self, profile: SiteProfile) -> list[SearchResult]:
+        """Series/peliculas enlazadas en la pagina actual."""
+
+    @abstractmethod
+    def has_element(self, selector: str) -> bool:
+        """Hay algun elemento que coincide (visible o no)."""
+
+    @abstractmethod
     def episodes(self, profile: SiteProfile) -> list[Episode]: ...
 
     @abstractmethod

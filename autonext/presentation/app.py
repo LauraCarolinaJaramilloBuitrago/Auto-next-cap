@@ -307,6 +307,7 @@ class App(ctk.CTk):
         ctk.CTkButton(top, text="Buscar", width=90, height=36, fg_color=ACCENT, hover_color=ACCENT_HOVER,
                       command=self._search).pack(side="left")
         small_btn(top, "↻ Capítulos", self._read_episodes, width=110).pack(side="left", padx=6)
+        small_btn(top, "🏠 Inicio", lambda: self.ctl.command("home"), width=90).pack(side="left")
         cols = ctk.CTkFrame(t, fg_color="transparent")
         cols.pack(fill="both", expand=True, pady=(8, 0))
         cols.columnconfigure((0, 1), weight=1)
@@ -353,9 +354,11 @@ class App(ctk.CTk):
         self._field(f, 6, "season_selector", "Temporadas (CSS)", hint="<select> o pestañas")
         self._field(f, 7, "language_selector", "Pestañas de idioma (CSS)", hint="se pulsa la del idioma preferido")
         self._field(f, 8, "allowed_domains", "Dominios permitidos", hint="otras pestañas se cierran")
-        self.tb_play = self._textbox(f, 9, "Botones de Play (uno por línea, se buscan en todos los iframes)")
-        self.tb_popup = self._textbox(f, 11, "Botones para cerrar emergentes (uno por línea)")
-        self.tb_overlay = self._textbox(f, 13, "Overlays que se eliminan (uno por línea)", 50)
+        self._field(f, 9, "home_url", "Pantalla de inicio", hint="vacío = raíz del sitio")
+        self._field(f, 10, "login_selector", "Aviso de sesión (CSS)", hint="botón 'Iniciar sesión'")
+        self.tb_play = self._textbox(f, 11, "Botones de Play (uno por línea, se buscan en todos los iframes)")
+        self.tb_popup = self._textbox(f, 13, "Botones para cerrar emergentes (uno por línea)")
+        self.tb_overlay = self._textbox(f, 15, "Overlays que se eliminan (uno por línea)", 50)
 
     def _tab_browser(self, t):
         f = ctk.CTkFrame(t, fg_color="transparent")
@@ -387,7 +390,8 @@ class App(ctk.CTk):
 
     TEXT_FIELDS = ["url", "seconds_before_end", "next_selector", "next_text", "server_timeout", "stall_seconds",
                    "min_video_duration", "search_input_selector", "search_url", "result_pattern",
-                   "episode_pattern", "season_selector", "episode_limit", "preferred_language", "language_selector"]
+                   "episode_pattern", "season_selector", "episode_limit", "preferred_language", "language_selector",
+                   "home_url", "login_selector"]
     BOOL_FIELDS = ["fullscreen", "max_quality", "auto_rank_servers", "resume", "auto_resume", "episode_limit_enabled"]
 
     def _load(self, p: SiteProfile):
@@ -432,6 +436,8 @@ class App(ctk.CTk):
             max_quality=self.fields["max_quality"].get(),
             preferred_language=txt("preferred_language"),
             language_selector=txt("language_selector"),
+            home_url=txt("home_url"),
+            login_selector=txt("login_selector"),
             auto_rank_servers=self.fields["auto_rank_servers"].get(),
             server_timeout=num("server_timeout", 50),
             stall_seconds=num("stall_seconds", 20),

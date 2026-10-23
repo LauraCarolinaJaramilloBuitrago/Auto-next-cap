@@ -122,6 +122,8 @@ class SiteProfile:
     result_pattern: str = r"/serie/[^/]+/?$"
     episode_pattern: str = r"/episodio"
     season_selector: str = ""        # <select> de temporadas o pestañas/acordeones
+    home_url: str = ""               # pantalla de inicio con series (vacio = raiz del sitio)
+    login_selector: str = ""         # si se ve, falta iniciar sesion (el usuario entra a mano en Brave)
     # Sesion
     episode_limit_enabled: bool = False
     episode_limit: int = 3
@@ -248,7 +250,25 @@ def default_profiles() -> list[SiteProfile]:
         season_selector="a.ss-item",
         preferred_language="",  # sitio en ingles: sin pestañas de idioma
     )
-    return [sololatino, seriesflix, movie0123]
+    crunchyroll = SiteProfile(
+        name="crunchyroll",
+        url="https://www.crunchyroll.com/es/",
+        next_selector="[data-t='next-episode'] a",
+        next_text="Siguiente episodio",
+        play_selectors=list(COMMON_PLAY),
+        popup_selectors=["[aria-label='Close']", "[aria-label='Cerrar']"],
+        allowed_domains=["crunchyroll.com"],  # incluye sso.crunchyroll.com (inicio de sesion)
+        servers=[],  # reproductor propio, sin servidores
+        search_url="https://www.crunchyroll.com/es/search?q={q}",
+        result_pattern=r"/series/[A-Z0-9]+/[^/?#]+/?$",
+        episode_pattern=r"/watch/[A-Z0-9]+/[^/?#]+/?$",
+        season_selector="[data-t='previous-season'], [data-t='next-season']",
+        home_url="https://www.crunchyroll.com/es/",
+        login_selector="[data-t='signin-link'], a[href*='sso.crunchyroll.com/authorize']",
+        preferred_language="",  # el audio se elige en el reproductor de Crunchyroll
+        min_video_duration=60,
+    )
+    return [sololatino, seriesflix, movie0123, crunchyroll]
 
 
 def default_profile() -> SiteProfile:

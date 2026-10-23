@@ -242,6 +242,7 @@ function SearchTab({ s, run, goEpisodes }) {
   return (
     <>
       <SearchBox s={s} />
+      <button className="btn wide" onClick={run(() => api.cmd("home"))}>🏠 Series del inicio de {s.active}</button>
       <div className="results">
         {s.results.map((r) => (
           <button key={r.url} className="result" onClick={run(async () => { await api.cmd("open", { url: r.url }); goEpisodes(); })}>

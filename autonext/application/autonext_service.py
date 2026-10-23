@@ -250,6 +250,17 @@ class AutoNextService:
             results = self.browser.search(self.profile, q)
             self.publish(ev.DomainEvent("results", f"{len(results)} resultados",
                                         {"results": [asdict(r) for r in results]}))
+        elif cmd.name == "home":
+            self.mode = BROWSING
+            self.browser.exit_fullscreen()
+            u = urlparse(self.profile.url)
+            self.browser.open(self.profile.home_url or f"{u.scheme}://{u.netloc}/")
+            self.browser.close_popups(self.profile)
+            self.browser.wait(3)  # sitios que cargan las tarjetas con JavaScript
+            self._check_login()
+            results = self.browser.results_here(self.profile)
+            self.publish(ev.DomainEvent("results", f"{len(results)} series en el inicio",
+                                        {"results": [asdict(r) for r in results]}))
         elif cmd.name == "open":
             url = str(a["url"])
             self.browser.exit_fullscreen()
@@ -284,6 +295,10 @@ class AutoNextService:
             self._publish_episodes()
         return True
 
+    def _check_login(self) -> None:
+        if self.profile.login_selector and self.browser.has_element(self.profile.login_selector):
+            self.publish(ev.warn("Sin sesion iniciada: entra a tu cuenta en la ventana de Brave (solo la primera vez)"))
+
     def _apply_quality(self) -> None:
         """Los reproductores cargan las calidades tarde: se reintenta unas veces por capitulo."""
         if not self.profile.max_quality or self._quality_tries >= 5:
@@ -302,6 +317,11 @@ class AutoNextService:
         if not self.browser.episodes(self.profile) and seasons:
             self.browser.choose_season(self.profile, 0)  # serie sin lista: abrir temporada 1
         self._publish_episodes()
+        if not self.browser.episodes(self.profile):  # portada del sitio: ofrecer sus series
+            results = self.browser.results_here(self.profile)
+            if results:
+                self.publish(ev.DomainEvent("results", f"{len(results)} series en la pagina",
+                                            {"results": [asdict(r) for r in results]}))
 
     def _publish_episodes(self):
         self._listed_url = self.browser.current_url()
@@ -330,6 +350,7 @@ class AutoNextService:
             self.browser.start(url, host if not (saved or self.start_url) else None)
             self.publish(ev.ok(f"Pestaña: {self.browser.current_url()}"))
             self._wait(2)
+            self._check_login()
             if self._is_episode(self.browser.current_url()):
                 self.ensure_playing(resume_at=resume_at if resume_at and resume_at > 30 else None)
             else:
