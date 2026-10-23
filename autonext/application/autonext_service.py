@@ -40,6 +40,7 @@ class AutoNextService:
         self._user_paused = False       # pausa pedida desde el panel o el celular
         self._paused_since: float | None = None
         self._listed_url = ""           # pagina de la que ya se publicaron los capitulos
+        self._own_url = ""              # ultima pagina a la que llego la app (no el usuario)
         self.want_fullscreen = profile.fullscreen  # el usuario puede quitarla durante la sesion
         self._quality_tries = 0         # intentos de subir calidad en el capitulo actual
 
@@ -109,6 +110,7 @@ class AutoNextService:
     def ensure_playing(self, resume_at: float | None = None, exclude: Server | None = None,
                        first: Server | None = None) -> bool:
         self.mode = WATCHING
+        self._own_url = self.browser.current_url()
         if self.browser.select_language(self.profile):
             self.publish(ev.info(f"Idioma: {self.profile.preferred_language}"))
         self._quality_tries = 0
@@ -298,6 +300,28 @@ class AutoNextService:
             self._publish_episodes()
         return True
 
+    def _follow_page(self) -> None:
+        """La pagina cambio (tambien si el usuario navega a mano en Brave): seguirla."""
+        url = self.browser.current_url()
+        if url == self._own_url:
+            return  # la abrio la propia app: su estado ya esta al dia
+        self._own_url = url
+        if self._is_episode(url):
+            self.publish(ev.info("Capitulo abierto en Brave: siguiendo la pagina"))
+            self.mode = WATCHING
+            self.stall.reset()  # el video nuevo aun no carga: no es un servidor caido
+            self.current_server = None
+            self._user_paused = False
+            self._quality_tries = 0
+            self._save_progress(0, force=True)
+        elif self.mode == WATCHING:
+            self.mode = BROWSING
+            self.publish(ev.info("Saliste del capitulo: navegando"))
+            results = self.browser.results_here(self.profile)
+            if results:
+                self.publish(ev.DomainEvent("results", f"{len(results)} series en la pagina",
+                                            {"results": [asdict(r) for r in results]}))
+
     def _check_login(self) -> None:
         if not (self.profile.login_selector and self.browser.has_element(self.profile.login_selector)):
             return
@@ -328,6 +352,7 @@ class AutoNextService:
     def _browse(self):
         """Pagina de serie: publicar temporadas y capitulos."""
         self.mode = BROWSING
+        self._own_url = self.browser.current_url()
         seasons = self.browser.seasons(self.profile)
         self.publish(ev.DomainEvent("seasons", "", {"seasons": seasons}))
         if not self.browser.episodes(self.profile) and seasons:
@@ -378,6 +403,7 @@ class AutoNextService:
                     break
                 self.browser.close_popups(self.profile, deep=False)
                 if self.browser.current_url() != self._listed_url:  # pagina nueva: listas al dia
+                    self._follow_page()
                     self._publish_seasons()
                     self._publish_episodes()
                     self._publish_servers()
