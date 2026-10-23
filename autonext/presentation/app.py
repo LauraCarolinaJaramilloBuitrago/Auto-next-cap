@@ -13,6 +13,7 @@ from ..application.controller import AppController
 from ..domain import events as ev
 from ..domain.models import Server, SiteProfile, default_profile
 from ..infrastructure.brave_browser import find_brave
+from ..infrastructure.credential_store import CredentialStore
 from ..infrastructure.json_repository import JsonProfileRepository
 
 ACCENT = "#7c3aed"
@@ -81,9 +82,11 @@ class ServerRow(ctk.CTkFrame):
 
 
 class App(ctk.CTk):
-    def __init__(self, controller: AppController, repo: JsonProfileRepository):
+    def __init__(self, controller: AppController, repo: JsonProfileRepository,
+                 credentials: CredentialStore | None = None):
         super().__init__()
         self.repo = repo
+        self.credentials = credentials
         self.ctl = controller
         self._qr_url = ""
         ctk.set_appearance_mode(self.repo.settings().get("theme", "dark"))
@@ -356,9 +359,34 @@ class App(ctk.CTk):
         self._field(f, 8, "allowed_domains", "Dominios permitidos", hint="otras pestañas se cierran")
         self._field(f, 9, "home_url", "Pantalla de inicio", hint="vacío = raíz del sitio")
         self._field(f, 10, "login_selector", "Aviso de sesión (CSS)", hint="botón 'Iniciar sesión'")
-        self.tb_play = self._textbox(f, 11, "Botones de Play (uno por línea, se buscan en todos los iframes)")
-        self.tb_popup = self._textbox(f, 13, "Botones para cerrar emergentes (uno por línea)")
-        self.tb_overlay = self._textbox(f, 15, "Overlays que se eliminan (uno por línea)", 50)
+        self._field(f, 11, "login_url", "Página de acceso", hint="donde se escribe usuario y contraseña")
+        self._field(f, 12, "login_user_selector", "Campo usuario (CSS)")
+        self._field(f, 13, "login_pass_selector", "Campo contraseña (CSS)")
+        self._field(f, 14, "login_submit_selector", "Botón entrar (CSS)")
+        # Cuenta: nunca se guarda en perfiles.json; la contraseña no se vuelve a mostrar
+        acc = ctk.CTkFrame(f, fg_color=BG_SOFT, corner_radius=10)
+        acc.grid(row=15, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
+        acc.columnconfigure(1, weight=1)
+        ctk.CTkLabel(acc, text="🔑 Cuenta del sitio", font=ctk.CTkFont(weight="bold")).grid(
+            row=0, column=0, columnspan=3, sticky="w", padx=10, pady=(8, 2))
+        self.var_acc_user = ctk.StringVar()
+        self.var_acc_pass = ctk.StringVar()
+        ctk.CTkLabel(acc, text="Usuario / correo").grid(row=1, column=0, sticky="w", padx=10, pady=4)
+        ctk.CTkEntry(acc, textvariable=self.var_acc_user).grid(row=1, column=1, sticky="ew", padx=10)
+        ctk.CTkLabel(acc, text="Contraseña").grid(row=2, column=0, sticky="w", padx=10, pady=4)
+        self.ent_acc_pass = ctk.CTkEntry(acc, textvariable=self.var_acc_pass, show="•")
+        self.ent_acc_pass.grid(row=2, column=1, sticky="ew", padx=10)
+        btns = ctk.CTkFrame(acc, fg_color="transparent")
+        btns.grid(row=1, column=2, rowspan=2, padx=(0, 10))
+        ctk.CTkButton(btns, text="Guardar", width=80, fg_color=ACCENT, hover_color=ACCENT_HOVER,
+                      command=self._save_account).pack(pady=2)
+        ctk.CTkButton(btns, text="Borrar", width=80, fg_color="transparent", border_width=1, text_color=TEXT,
+                      border_color=DANGER, command=self._delete_account).pack(pady=2)
+        self.lbl_acc = ctk.CTkLabel(acc, text="", text_color=MUTED, anchor="w", justify="left", wraplength=480)
+        self.lbl_acc.grid(row=3, column=0, columnspan=3, sticky="w", padx=10, pady=(0, 8))
+        self.tb_play = self._textbox(f, 16, "Botones de Play (uno por línea, se buscan en todos los iframes)")
+        self.tb_popup = self._textbox(f, 18, "Botones para cerrar emergentes (uno por línea)")
+        self.tb_overlay = self._textbox(f, 20, "Overlays que se eliminan (uno por línea)", 50)
 
     def _tab_browser(self, t):
         f = ctk.CTkFrame(t, fg_color="transparent")
@@ -391,7 +419,8 @@ class App(ctk.CTk):
     TEXT_FIELDS = ["url", "seconds_before_end", "next_selector", "next_text", "server_timeout", "stall_seconds",
                    "min_video_duration", "search_input_selector", "search_url", "result_pattern",
                    "episode_pattern", "season_selector", "episode_limit", "preferred_language", "language_selector",
-                   "home_url", "login_selector"]
+                   "home_url", "login_selector", "login_url", "login_user_selector",
+                   "login_pass_selector", "login_submit_selector"]
     BOOL_FIELDS = ["fullscreen", "max_quality", "auto_rank_servers", "resume", "auto_resume", "episode_limit_enabled"]
 
     def _load(self, p: SiteProfile):
@@ -412,6 +441,33 @@ class App(ctk.CTk):
             self._add_server_row(s)
         self._update_health_bars()
         self._show_progress()
+        self._show_account()
+
+    def _show_account(self):
+        if not self.credentials:
+            self.lbl_acc.configure(text="Sin almacén de credenciales")
+            return
+        user = self.credentials.user(self.profile.name)
+        self.var_acc_user.set(user)
+        self.var_acc_pass.set("")
+        self.ent_acc_pass.configure(placeholder_text="•••••• (guardada)" if user else "")
+        self.lbl_acc.configure(text=(f"Guardada en: {self.credentials.backend}. " if user else "Sin cuenta guardada. ")
+                               + "No va a perfiles.json ni a git, y el celular no la ve.")
+
+    def _save_account(self):
+        user, pwd = self.var_acc_user.get().strip(), self.var_acc_pass.get()
+        if not self.credentials or not user or not pwd:
+            messagebox.showwarning("Cuenta", "Escribe usuario y contraseña")
+            return
+        where = self.credentials.set(self.profile.name, user, pwd)
+        self._show_account()
+        self._write(ev.ok(f"Cuenta de {self.profile.name} guardada ({where})"))
+
+    def _delete_account(self):
+        if self.credentials:
+            self.credentials.delete(self.profile.name)
+            self._show_account()
+            self._write(ev.info(f"Cuenta de {self.profile.name} borrada"))
 
     def _show_progress(self):
         pr = self.repo.progress(self.profile.name)
@@ -438,6 +494,10 @@ class App(ctk.CTk):
             language_selector=txt("language_selector"),
             home_url=txt("home_url"),
             login_selector=txt("login_selector"),
+            login_url=txt("login_url"),
+            login_user_selector=txt("login_user_selector"),
+            login_pass_selector=txt("login_pass_selector"),
+            login_submit_selector=txt("login_submit_selector"),
             auto_rank_servers=self.fields["auto_rank_servers"].get(),
             server_timeout=num("server_timeout", 50),
             stall_seconds=num("stall_seconds", 20),

@@ -554,6 +554,34 @@ class BraveBrowser(BrowserPort):
         return [SearchResult(l["title"] or l["url"].rstrip("/").rsplit("/", 1)[-1], l["url"], l["image"])
                 for l in links][:60]
 
+    def login(self, profile: SiteProfile, user: str, password: str) -> bool:
+        self.page.goto(profile.login_url, wait_until="domcontentloaded")
+        self.wait(3)
+        try:
+            box = self.page.locator(profile.login_user_selector).filter(visible=True).first
+            pwd = self.page.locator(profile.login_pass_selector).filter(visible=True).first
+            box.wait_for(timeout=15000)
+            self._click(box)
+            box.fill("")
+            box.type(user, delay=random.randint(40, 90))
+            self._click(pwd)
+            pwd.fill("")
+            pwd.type(password, delay=random.randint(40, 90))
+            self.wait(0.5)
+            submit = self.page.locator(profile.login_submit_selector).filter(visible=True).first
+            if submit.count():
+                self._click(submit)
+            else:
+                pwd.press("Enter")
+        except Exception:
+            return False
+        login_host = urlparse(profile.login_url).netloc + urlparse(profile.login_url).path
+        for _ in range(40):  # hasta 40 s: da tiempo a resolver un captcha a mano en Brave
+            self.wait(1)
+            if login_host not in self.page.url:
+                return True
+        return False
+
     def has_element(self, selector: str) -> bool:
         try:
             return self.page.locator(selector).count() > 0  # puede estar dentro de un menu cerrado

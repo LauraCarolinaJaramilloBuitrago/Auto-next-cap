@@ -18,6 +18,7 @@ Librerías de Python (se instalan solas desde `requirements.txt`):
 - `playwright`: controla Brave.
 - `customtkinter`: el panel.
 - `qrcode[pil]`: el QR del control móvil.
+- `keyring`: guarda las contraseñas de los sitios en el llavero del sistema.
 
 Espacio aproximado: ~150 MB de Python/venv, ~110 MB de Brave, ~40 MB de `web/node_modules`.
 
@@ -99,6 +100,15 @@ En la terminal aparece `Control movil: http://192.168.x.x:8765/?t=...`.
 ```bash
 sudo ufw allow 8765/tcp
 ```
+
+## Cuentas de sitios (Crunchyroll, etc.)
+
+En el panel, pestaña **Sitio → 🔑 Cuenta del sitio**: escribe usuario y contraseña y pulsa **Guardar**. AutoNext inicia sesión solo cuando el sitio lo pida.
+
+- La contraseña va al llavero del sistema (GNOME Keyring / KWallet, a través de `keyring`). En Debian con escritorio ya viene instalado.
+- Sin llavero (servidor sin escritorio) se guarda en `credenciales.json`, con permisos `600` y excluido de git por `.gitignore`.
+- Nunca se guarda en `perfiles.json` y el celular no la ve.
+- Si el sitio muestra un captcha, resuélvelo a mano en la ventana de Brave. AutoNext espera hasta 40 s.
 
 ## 6. Actualizar dependencias
 

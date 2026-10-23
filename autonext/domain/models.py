@@ -123,7 +123,12 @@ class SiteProfile:
     episode_pattern: str = r"/episodio"
     season_selector: str = ""        # <select> de temporadas o pestañas/acordeones
     home_url: str = ""               # pantalla de inicio con series (vacio = raiz del sitio)
-    login_selector: str = ""         # si se ve, falta iniciar sesion (el usuario entra a mano en Brave)
+    login_selector: str = ""         # si existe, falta iniciar sesion
+    # Inicio de sesion automatico (usuario y contraseña se guardan aparte, nunca en perfiles.json)
+    login_url: str = ""
+    login_user_selector: str = "input[type='email'], input[name='email'], input[name='username']"
+    login_pass_selector: str = "input[type='password']"
+    login_submit_selector: str = "form button[type='submit']"
     # Sesion
     episode_limit_enabled: bool = False
     episode_limit: int = 3
@@ -265,6 +270,9 @@ def default_profiles() -> list[SiteProfile]:
         season_selector="[data-t='previous-season'], [data-t='next-season']",
         home_url="https://www.crunchyroll.com/es/",
         login_selector="[data-t='signin-link'], a[href*='sso.crunchyroll.com/authorize']",
+        login_url="https://sso.crunchyroll.com/es/login",
+        login_user_selector="input[name='email']",
+        login_pass_selector="input[name='password']",
         preferred_language="",  # el audio se elige en el reproductor de Crunchyroll
         min_video_duration=60,
     )

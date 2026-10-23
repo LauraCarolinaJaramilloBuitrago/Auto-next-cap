@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 from ..domain import events as ev
 from ..domain.commands import Command
-from ..domain.ports import BrowserPort, ProfileRepository
+from ..domain.ports import BrowserPort, CredentialPort, ProfileRepository
 from .autonext_service import AutoNextService
 
 IDLE_STATUS = {"mode": "idle", "position": 0, "duration": 0, "paused": True, "episode": 0,
@@ -18,8 +18,10 @@ IDLE_STATUS = {"mode": "idle", "position": 0, "duration": 0, "paused": True, "ep
 
 
 class AppController:
-    def __init__(self, repo: ProfileRepository, browser_factory: Callable[[], BrowserPort]):
+    def __init__(self, repo: ProfileRepository, browser_factory: Callable[[], BrowserPort],
+                 credentials: CredentialPort | None = None):
         self.repo = repo
+        self.credentials = credentials
         self.browser_factory = browser_factory
         self.service: AutoNextService | None = None
         self._subs: list[Callable[[ev.DomainEvent], None]] = []
@@ -75,7 +77,8 @@ class AppController:
         profiles = self.repo.all()
         profile = profiles[profile_name] if profile_name in profiles else self.active_profile()
         self.repo.save(profile)  # pasa a ser el activo
-        self.service = AutoNextService(profile, self.browser_factory(), self.repo, self._on_event, start_url=url)
+        self.service = AutoNextService(profile, self.browser_factory(), self.repo, self._on_event, start_url=url,
+                                       credentials=self.credentials)
         threading.Thread(target=self.service.run, daemon=True).start()
 
     def stop(self) -> None:

@@ -89,6 +89,10 @@ class BrowserPort(ABC):
         """Series/peliculas enlazadas en la pagina actual."""
 
     @abstractmethod
+    def login(self, profile: SiteProfile, user: str, password: str) -> bool:
+        """Rellena el formulario de acceso del sitio; True si salio de la pagina de login."""
+
+    @abstractmethod
     def has_element(self, selector: str) -> bool:
         """Hay algun elemento que coincide (visible o no)."""
 
@@ -100,6 +104,22 @@ class BrowserPort(ABC):
 
     @abstractmethod
     def choose_season(self, profile: SiteProfile, index: int) -> None: ...
+
+
+class CredentialPort(ABC):
+    """Usuario y contraseña por perfil, guardados fuera del repositorio."""
+
+    @abstractmethod
+    def get(self, profile: str) -> tuple[str, str] | None: ...
+
+    @abstractmethod
+    def user(self, profile: str) -> str: ...
+
+    @abstractmethod
+    def set(self, profile: str, user: str, password: str) -> str: ...
+
+    @abstractmethod
+    def delete(self, profile: str) -> None: ...
 
 
 class ProfileRepository(ABC):

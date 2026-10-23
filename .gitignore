@@ -1,0 +1,9 @@
+# Datos privados: nunca a git
+credenciales.json
+brave_profile/
+
+# Generados
+__pycache__/
+*.pyc
+.venv/
+web/node_modules/

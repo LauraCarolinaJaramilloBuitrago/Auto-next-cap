@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from ..domain import events as ev
 from ..domain.commands import Command
 from ..domain.models import PlaybackState, Progress, Server, SiteProfile
-from ..domain.ports import BrowserPort, ProfileRepository
+from ..domain.ports import BrowserPort, CredentialPort, ProfileRepository
 from ..domain.services import EpisodeTransitionPolicy, StallDetector
 
 WATCHING, BROWSING = "watching", "browsing"
@@ -20,8 +20,11 @@ WATCHING, BROWSING = "watching", "browsing"
 
 class AutoNextService:
     def __init__(self, profile: SiteProfile, browser: BrowserPort, repo: ProfileRepository,
-                 publish: Callable[[ev.DomainEvent], None], start_url: str | None = None):
+                 publish: Callable[[ev.DomainEvent], None], start_url: str | None = None,
+                 credentials: CredentialPort | None = None):
         self.profile = profile
+        self.credentials = credentials
+        self._login_tried = False       # un intento automatico por sesion
         self.browser = browser
         self.repo = repo
         self.publish = publish
@@ -296,8 +299,21 @@ class AutoNextService:
         return True
 
     def _check_login(self) -> None:
-        if self.profile.login_selector and self.browser.has_element(self.profile.login_selector):
-            self.publish(ev.warn("Sin sesion iniciada: entra a tu cuenta en la ventana de Brave (solo la primera vez)"))
+        if not (self.profile.login_selector and self.browser.has_element(self.profile.login_selector)):
+            return
+        creds = self.credentials.get(self.profile.name) if self.credentials else None
+        if not creds or not self.profile.login_url or self._login_tried:
+            self.publish(ev.warn("Sin sesion iniciada: guarda tu cuenta en el panel (pestaña Sitio) "
+                                 "o entra a mano en la ventana de Brave"))
+            return
+        self._login_tried = True
+        back = self.browser.current_url()
+        self.publish(ev.info(f"Iniciando sesion como {creds[0]}..."))
+        if self.browser.login(self.profile, *creds):
+            self.publish(ev.ok("Sesion iniciada"))
+            self.browser.open(back)
+        else:
+            self.publish(ev.warn("No se pudo iniciar sesion: revisa la cuenta o resuelve el captcha en Brave"))
 
     def _apply_quality(self) -> None:
         """Los reproductores cargan las calidades tarde: se reintenta unas veces por capitulo."""
