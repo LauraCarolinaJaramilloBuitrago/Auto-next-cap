@@ -124,6 +124,7 @@ class AppController:
                 "progress": progress,
                 "limit": {"enabled": p.episode_limit_enabled, "count": p.episode_limit},
                 "quality": p.max_quality,
+                "account": self._account_info(active),
                 "language": p.preferred_language,
                 "server_url": self.server_url,
                 "now": time.time(),
@@ -132,6 +133,27 @@ class AppController:
     def set_active(self, name: str) -> None:
         if not self.running and name in self.repo.all():
             self.repo.save(self.repo.all()[name])
+
+    # ---------- cuentas (la contraseña entra pero nunca sale) ----------
+    def _account_info(self, profile: str) -> dict:
+        user = self.credentials.user(profile) if self.credentials else ""
+        if not user:
+            return {"saved": False, "user": ""}
+        name, _, domain = user.partition("@")
+        return {"saved": True, "user": name[:2] + "***" + ("@" + domain if domain else "")}
+
+    def set_account(self, profile: str, user: str, password: str) -> str:
+        if not self.credentials:
+            raise ValueError("Sin almacen de credenciales")
+        if profile not in self.repo.all():
+            raise ValueError("Perfil desconocido")
+        if not user.strip() or not password:
+            raise ValueError("Falta usuario o contraseña")
+        return self.credentials.set(profile, user.strip(), password)
+
+    def delete_account(self, profile: str) -> None:
+        if self.credentials and profile in self.repo.all():
+            self.credentials.delete(profile)
 
     def set_quality(self, enabled: bool) -> None:
         p = self.active_profile()

@@ -28,6 +28,8 @@ export const api = {
   cmd: (name, args = {}) => call("POST", "/api/command", { name, args }),
   profile: (name) => call("POST", "/api/profile", { name }),
   quality: (enabled) => call("POST", "/api/quality", { enabled }),
+  account: (profile, user, password) => call("POST", "/api/account", { profile, user, password }),
+  deleteAccount: (profile) => call("POST", "/api/account/delete", { profile }),
   limit: (enabled, count) => call("POST", "/api/limit", { enabled, count }),
 };
 

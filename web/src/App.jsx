@@ -124,6 +124,7 @@ function PlayTab({ s, run }) {
         {!s.running && prog && (
           <p className="muted small">Último: {prog.title || prog.url} · {fmt(prog.position)}</p>
         )}
+        <AccountBox s={s} run={run} />
       </section>
 
       <section className="card now">
@@ -218,6 +219,41 @@ function PlayTab({ s, run }) {
         </section>
       )}
     </>
+  );
+}
+
+function AccountBox({ s, run }) {
+  const [open, setOpen] = useState(false);
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const acc = s.account || {};
+  const save = run(async (e) => {
+    e.preventDefault();
+    await api.account(s.active, user, pass);
+    setPass(""); setOpen(false);  // la contraseña no se queda en la pantalla
+  });
+  return (
+    <div className="account">
+      <button className="link small" type="button" onClick={() => setOpen(!open)}>
+        🔑 Cuenta de {s.active}: {acc.saved ? acc.user : "sin guardar"} {open ? "▲" : "▼"}
+      </button>
+      {open && (
+        <form className="account-form" onSubmit={save}>
+          <input type="email" autoComplete="username" placeholder="Correo / usuario" value={user}
+            onChange={(e) => setUser(e.target.value)} />
+          <input type="password" autoComplete="current-password" placeholder="Contraseña" value={pass}
+            onChange={(e) => setPass(e.target.value)} />
+          <div className="row">
+            <button className="btn primary" disabled={!user || !pass}>Guardar</button>
+            {acc.saved && (
+              <button className="btn" type="button"
+                onClick={run(async () => { await api.deleteAccount(s.active); setOpen(false); })}>Borrar</button>
+            )}
+          </div>
+          <p className="muted small">Se guarda en la PC (llavero del sistema). No se vuelve a mostrar. Úsalo solo en tu Wi-Fi de casa.</p>
+        </form>
+      )}
+    </div>
   );
 }
 

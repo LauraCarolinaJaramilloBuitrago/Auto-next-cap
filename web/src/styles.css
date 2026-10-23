@@ -126,3 +126,8 @@ code, .mono { font-family: ui-monospace, Consolas, monospace; word-break: break-
 .volume { justify-content: center; margin: 12px 0 4px; }
 .volume .vol { min-width: 52px; text-align: center; }
 .servers { margin: 8px 0; }
+.account { margin-top: 10px; }
+.link { background: none; border: 0; padding: 4px 0; color: var(--muted); cursor: pointer; text-align: left; }
+.account-form { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.account-form input { border: 1px solid var(--line); background: var(--bg); color: var(--text);
+  border-radius: 10px; padding: 10px 12px; font-size: 16px; }

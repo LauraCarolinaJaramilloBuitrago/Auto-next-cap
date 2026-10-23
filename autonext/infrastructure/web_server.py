@@ -93,6 +93,11 @@ class WebServer:
                         c.command(body["name"], **body.get("args", {}))
                     elif u.path == "/api/profile":
                         c.set_active(body["name"])
+                    elif u.path == "/api/account":
+                        c.set_account(str(body.get("profile") or c.repo.active_name()),
+                                      str(body.get("user", "")), str(body.get("password", "")))
+                    elif u.path == "/api/account/delete":
+                        c.delete_account(str(body.get("profile") or c.repo.active_name()))
                     elif u.path == "/api/quality":
                         c.set_quality(bool(body.get("enabled")))
                     elif u.path == "/api/limit":
